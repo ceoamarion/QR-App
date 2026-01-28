@@ -1,13 +1,13 @@
 {
-  "id": "102019c027003cc786e93c60f44b9925b9c",
+  "id": "102019c027003cc797fb6cbb0de24625702",
   "version": "102019c027003cc77d3bdb2bc7521c579bd",
   "schema": {
-    "name": "demo_request",
-    "description": "Stores contact form submissions for demo requests from schools and districts, containing contact details and preferences",
+    "name": "users",
+    "description": "Users of the system including administrators, teachers, and developers.",
     "fields": [
       {
         "name": "id",
-        "description": "Unique identifier for the demo request",
+        "description": "Unique identifier for the user",
         "type": 1,
         "compliance": {
           "confidentiality": 1,
@@ -53,73 +53,99 @@
         "format": "timestamp"
       },
       {
-        "name": "school_name",
-        "description": "Name of the school or district requesting the demo",
-        "type": 1,
-        "compliance": {
-          "confidentiality": 2,
-          "reason": "Business operational data"
-        }
-      },
-      {
-        "name": "contact_person_name",
-        "description": "Full name of the contact person at the school",
+        "name": "full_name",
+        "description": "Full name of the user",
         "type": 1,
         "compliance": {
           "confidentiality": 3,
-          "reason": "Personally Identifiable Information (PII)"
+          "reason": "PII"
         }
       },
       {
-        "name": "contact_email",
-        "description": "Email address of the contact person",
+        "name": "email",
+        "description": "Email address of the user, used for login",
         "type": 1,
         "compliance": {
           "confidentiality": 3,
-          "reason": "Personally Identifiable Information (PII)"
+          "reason": "PII and Login Credential"
         },
         "format": "email"
       },
       {
-        "name": "contact_phone",
-        "description": "Phone number of the contact person",
+        "name": "password_hash",
+        "description": "Hashed password for authentication",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 4,
+          "reason": "Authentication Credential"
+        },
+        "encryption": true
+      },
+      {
+        "name": "phone",
+        "description": "Phone number of the user",
         "type": 1,
         "compliance": {
           "confidentiality": 3,
-          "reason": "Personally Identifiable Information (PII)"
+          "reason": "PII"
         },
         "nullable": true
       },
       {
-        "name": "student_count",
-        "description": "Estimated number of students in the school or district",
-        "type": 2,
+        "name": "role",
+        "description": "Role of the user determining permissions",
+        "type": 100,
         "compliance": {
           "confidentiality": 2,
-          "reason": "Business qualification metric"
+          "reason": "Access Control"
         },
-        "numeric": "int"
+        "enumeration": [
+          {
+            "value": "Unspecified"
+          },
+          {
+            "number": 1,
+            "value": "FREE"
+          },
+          {
+            "number": 2,
+            "value": "PAID_ADMIN"
+          },
+          {
+            "number": 3,
+            "value": "DEVELOPER"
+          }
+        ]
       },
       {
-        "name": "preferred_demo_time",
-        "description": "Preferred date and time for the demo in unix timestamp",
+        "name": "organization_id",
+        "description": "ID of the organization the user belongs to",
         "type": 1,
         "compliance": {
           "confidentiality": 2,
-          "reason": "Scheduling information"
+          "reason": "Relationship"
+        },
+        "nullable": true
+      },
+      {
+        "name": "last_login",
+        "description": "Timestamp of the last login event",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Audit trail"
         },
         "nullable": true,
         "format": "timestamp"
       },
       {
-        "name": "additional_notes",
-        "description": "Any additional context, questions, or notes provided by the requester",
-        "type": 1,
+        "name": "is_active",
+        "description": "Whether the user account is active",
+        "type": 3,
         "compliance": {
           "confidentiality": 2,
-          "reason": "Business context"
-        },
-        "nullable": true
+          "reason": "Operational status"
+        }
       }
     ],
     "indexes": [
@@ -145,21 +171,35 @@
       },
       {
         "fields": [
-          "contact_email"
+          "email"
+        ],
+        "unique": true,
+        "order": false
+      },
+      {
+        "fields": [
+          "organization_id"
         ],
         "order": false
       },
       {
         "fields": [
-          "school_name"
+          "is_active"
         ],
         "order": false
-      },
+      }
+    ],
+    "relations": [
       {
-        "fields": [
-          "create_time"
+        "referencing_fields": [
+          "organization_id"
         ],
-        "order": true
+        "referenced_entity": {
+          "name": "organizations"
+        },
+        "referenced_fields": [
+          "id"
+        ]
       }
     ]
   },

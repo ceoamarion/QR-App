@@ -11,15 +11,58 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as UpgradeImport } from './routes/upgrade'
+import { Route as StudentsImport } from './routes/students'
+import { Route as SignupImport } from './routes/signup'
+import { Route as SchoolsImport } from './routes/schools'
+import { Route as ScanEventsImport } from './routes/scan-events'
 import { Route as PrivacyImport } from './routes/privacy'
 import { Route as PricingImport } from './routes/pricing'
+import { Route as LoginImport } from './routes/login'
+import { Route as LocationsImport } from './routes/locations'
 import { Route as HowItWorksImport } from './routes/how-it-works'
 import { Route as FeaturesImport } from './routes/features'
+import { Route as DashboardImport } from './routes/dashboard'
 import { Route as ContactImport } from './routes/contact'
 import { Route as AboutImport } from './routes/about'
 import { Route as IndexImport } from './routes/index'
+import { Route as DeveloperIndexImport } from './routes/developer/index'
+import { Route as DeveloperUsersImport } from './routes/developer/users'
+import { Route as DeveloperOrganizationsImport } from './routes/developer/organizations'
+import { Route as DeveloperDataImport } from './routes/developer/data'
+import { Route as DeveloperActivityImport } from './routes/developer/activity'
 
 // Create/Update Routes
+
+const UpgradeRoute = UpgradeImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const StudentsRoute = StudentsImport.update({
+  id: '/students',
+  path: '/students',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SignupRoute = SignupImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const SchoolsRoute = SchoolsImport.update({
+  id: '/schools',
+  path: '/schools',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ScanEventsRoute = ScanEventsImport.update({
+  id: '/scan-events',
+  path: '/scan-events',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const PrivacyRoute = PrivacyImport.update({
   id: '/privacy',
@@ -33,6 +76,18 @@ const PricingRoute = PricingImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const LoginRoute = LoginImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const LocationsRoute = LocationsImport.update({
+  id: '/locations',
+  path: '/locations',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const HowItWorksRoute = HowItWorksImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
@@ -42,6 +97,12 @@ const HowItWorksRoute = HowItWorksImport.update({
 const FeaturesRoute = FeaturesImport.update({
   id: '/features',
   path: '/features',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DashboardRoute = DashboardImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -60,6 +121,36 @@ const AboutRoute = AboutImport.update({
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DeveloperIndexRoute = DeveloperIndexImport.update({
+  id: '/developer/',
+  path: '/developer/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DeveloperUsersRoute = DeveloperUsersImport.update({
+  id: '/developer/users',
+  path: '/developer/users',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DeveloperOrganizationsRoute = DeveloperOrganizationsImport.update({
+  id: '/developer/organizations',
+  path: '/developer/organizations',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DeveloperDataRoute = DeveloperDataImport.update({
+  id: '/developer/data',
+  path: '/developer/data',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const DeveloperActivityRoute = DeveloperActivityImport.update({
+  id: '/developer/activity',
+  path: '/developer/activity',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -88,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactImport
       parentRoute: typeof rootRoute
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardImport
+      parentRoute: typeof rootRoute
+    }
     '/features': {
       id: '/features'
       path: '/features'
@@ -100,6 +198,20 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksImport
+      parentRoute: typeof rootRoute
+    }
+    '/locations': {
+      id: '/locations'
+      path: '/locations'
+      fullPath: '/locations'
+      preLoaderRoute: typeof LocationsImport
+      parentRoute: typeof rootRoute
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginImport
       parentRoute: typeof rootRoute
     }
     '/pricing': {
@@ -116,6 +228,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyImport
       parentRoute: typeof rootRoute
     }
+    '/scan-events': {
+      id: '/scan-events'
+      path: '/scan-events'
+      fullPath: '/scan-events'
+      preLoaderRoute: typeof ScanEventsImport
+      parentRoute: typeof rootRoute
+    }
+    '/schools': {
+      id: '/schools'
+      path: '/schools'
+      fullPath: '/schools'
+      preLoaderRoute: typeof SchoolsImport
+      parentRoute: typeof rootRoute
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupImport
+      parentRoute: typeof rootRoute
+    }
+    '/students': {
+      id: '/students'
+      path: '/students'
+      fullPath: '/students'
+      preLoaderRoute: typeof StudentsImport
+      parentRoute: typeof rootRoute
+    }
+    '/upgrade': {
+      id: '/upgrade'
+      path: '/upgrade'
+      fullPath: '/upgrade'
+      preLoaderRoute: typeof UpgradeImport
+      parentRoute: typeof rootRoute
+    }
+    '/developer/activity': {
+      id: '/developer/activity'
+      path: '/developer/activity'
+      fullPath: '/developer/activity'
+      preLoaderRoute: typeof DeveloperActivityImport
+      parentRoute: typeof rootRoute
+    }
+    '/developer/data': {
+      id: '/developer/data'
+      path: '/developer/data'
+      fullPath: '/developer/data'
+      preLoaderRoute: typeof DeveloperDataImport
+      parentRoute: typeof rootRoute
+    }
+    '/developer/organizations': {
+      id: '/developer/organizations'
+      path: '/developer/organizations'
+      fullPath: '/developer/organizations'
+      preLoaderRoute: typeof DeveloperOrganizationsImport
+      parentRoute: typeof rootRoute
+    }
+    '/developer/users': {
+      id: '/developer/users'
+      path: '/developer/users'
+      fullPath: '/developer/users'
+      preLoaderRoute: typeof DeveloperUsersImport
+      parentRoute: typeof rootRoute
+    }
+    '/developer/': {
+      id: '/developer/'
+      path: '/developer'
+      fullPath: '/developer'
+      preLoaderRoute: typeof DeveloperIndexImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -125,20 +307,46 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/locations': typeof LocationsRoute
+  '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/scan-events': typeof ScanEventsRoute
+  '/schools': typeof SchoolsRoute
+  '/signup': typeof SignupRoute
+  '/students': typeof StudentsRoute
+  '/upgrade': typeof UpgradeRoute
+  '/developer/activity': typeof DeveloperActivityRoute
+  '/developer/data': typeof DeveloperDataRoute
+  '/developer/organizations': typeof DeveloperOrganizationsRoute
+  '/developer/users': typeof DeveloperUsersRoute
+  '/developer': typeof DeveloperIndexRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/locations': typeof LocationsRoute
+  '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/scan-events': typeof ScanEventsRoute
+  '/schools': typeof SchoolsRoute
+  '/signup': typeof SignupRoute
+  '/students': typeof StudentsRoute
+  '/upgrade': typeof UpgradeRoute
+  '/developer/activity': typeof DeveloperActivityRoute
+  '/developer/data': typeof DeveloperDataRoute
+  '/developer/organizations': typeof DeveloperOrganizationsRoute
+  '/developer/users': typeof DeveloperUsersRoute
+  '/developer': typeof DeveloperIndexRoute
 }
 
 export interface FileRoutesById {
@@ -146,10 +354,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/dashboard': typeof DashboardRoute
   '/features': typeof FeaturesRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/locations': typeof LocationsRoute
+  '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/scan-events': typeof ScanEventsRoute
+  '/schools': typeof SchoolsRoute
+  '/signup': typeof SignupRoute
+  '/students': typeof StudentsRoute
+  '/upgrade': typeof UpgradeRoute
+  '/developer/activity': typeof DeveloperActivityRoute
+  '/developer/data': typeof DeveloperDataRoute
+  '/developer/organizations': typeof DeveloperOrganizationsRoute
+  '/developer/users': typeof DeveloperUsersRoute
+  '/developer/': typeof DeveloperIndexRoute
 }
 
 export interface FileRouteTypes {
@@ -158,28 +379,67 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/contact'
+    | '/dashboard'
     | '/features'
     | '/how-it-works'
+    | '/locations'
+    | '/login'
     | '/pricing'
     | '/privacy'
+    | '/scan-events'
+    | '/schools'
+    | '/signup'
+    | '/students'
+    | '/upgrade'
+    | '/developer/activity'
+    | '/developer/data'
+    | '/developer/organizations'
+    | '/developer/users'
+    | '/developer'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/contact'
+    | '/dashboard'
     | '/features'
     | '/how-it-works'
+    | '/locations'
+    | '/login'
     | '/pricing'
     | '/privacy'
+    | '/scan-events'
+    | '/schools'
+    | '/signup'
+    | '/students'
+    | '/upgrade'
+    | '/developer/activity'
+    | '/developer/data'
+    | '/developer/organizations'
+    | '/developer/users'
+    | '/developer'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/contact'
+    | '/dashboard'
     | '/features'
     | '/how-it-works'
+    | '/locations'
+    | '/login'
     | '/pricing'
     | '/privacy'
+    | '/scan-events'
+    | '/schools'
+    | '/signup'
+    | '/students'
+    | '/upgrade'
+    | '/developer/activity'
+    | '/developer/data'
+    | '/developer/organizations'
+    | '/developer/users'
+    | '/developer/'
   fileRoutesById: FileRoutesById
 }
 
@@ -187,20 +447,46 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
+  DashboardRoute: typeof DashboardRoute
   FeaturesRoute: typeof FeaturesRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  LocationsRoute: typeof LocationsRoute
+  LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ScanEventsRoute: typeof ScanEventsRoute
+  SchoolsRoute: typeof SchoolsRoute
+  SignupRoute: typeof SignupRoute
+  StudentsRoute: typeof StudentsRoute
+  UpgradeRoute: typeof UpgradeRoute
+  DeveloperActivityRoute: typeof DeveloperActivityRoute
+  DeveloperDataRoute: typeof DeveloperDataRoute
+  DeveloperOrganizationsRoute: typeof DeveloperOrganizationsRoute
+  DeveloperUsersRoute: typeof DeveloperUsersRoute
+  DeveloperIndexRoute: typeof DeveloperIndexRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
+  DashboardRoute: DashboardRoute,
   FeaturesRoute: FeaturesRoute,
   HowItWorksRoute: HowItWorksRoute,
+  LocationsRoute: LocationsRoute,
+  LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  ScanEventsRoute: ScanEventsRoute,
+  SchoolsRoute: SchoolsRoute,
+  SignupRoute: SignupRoute,
+  StudentsRoute: StudentsRoute,
+  UpgradeRoute: UpgradeRoute,
+  DeveloperActivityRoute: DeveloperActivityRoute,
+  DeveloperDataRoute: DeveloperDataRoute,
+  DeveloperOrganizationsRoute: DeveloperOrganizationsRoute,
+  DeveloperUsersRoute: DeveloperUsersRoute,
+  DeveloperIndexRoute: DeveloperIndexRoute,
 }
 
 export const routeTree = rootRoute
@@ -216,10 +502,23 @@ export const routeTree = rootRoute
         "/",
         "/about",
         "/contact",
+        "/dashboard",
         "/features",
         "/how-it-works",
+        "/locations",
+        "/login",
         "/pricing",
-        "/privacy"
+        "/privacy",
+        "/scan-events",
+        "/schools",
+        "/signup",
+        "/students",
+        "/upgrade",
+        "/developer/activity",
+        "/developer/data",
+        "/developer/organizations",
+        "/developer/users",
+        "/developer/"
       ]
     },
     "/": {
@@ -231,17 +530,56 @@ export const routeTree = rootRoute
     "/contact": {
       "filePath": "contact.tsx"
     },
+    "/dashboard": {
+      "filePath": "dashboard.tsx"
+    },
     "/features": {
       "filePath": "features.tsx"
     },
     "/how-it-works": {
       "filePath": "how-it-works.tsx"
     },
+    "/locations": {
+      "filePath": "locations.tsx"
+    },
+    "/login": {
+      "filePath": "login.tsx"
+    },
     "/pricing": {
       "filePath": "pricing.tsx"
     },
     "/privacy": {
       "filePath": "privacy.tsx"
+    },
+    "/scan-events": {
+      "filePath": "scan-events.tsx"
+    },
+    "/schools": {
+      "filePath": "schools.tsx"
+    },
+    "/signup": {
+      "filePath": "signup.tsx"
+    },
+    "/students": {
+      "filePath": "students.tsx"
+    },
+    "/upgrade": {
+      "filePath": "upgrade.tsx"
+    },
+    "/developer/activity": {
+      "filePath": "developer/activity.tsx"
+    },
+    "/developer/data": {
+      "filePath": "developer/data.tsx"
+    },
+    "/developer/organizations": {
+      "filePath": "developer/organizations.tsx"
+    },
+    "/developer/users": {
+      "filePath": "developer/users.tsx"
+    },
+    "/developer/": {
+      "filePath": "developer/index.tsx"
     }
   }
 }

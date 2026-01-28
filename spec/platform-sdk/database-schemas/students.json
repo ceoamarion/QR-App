@@ -1,13 +1,13 @@
 {
-  "id": "102019c027003cc786e93c60f44b9925b9c",
+  "id": "102019c027003cc79b194b165e4e9042e0c",
   "version": "102019c027003cc77d3bdb2bc7521c579bd",
   "schema": {
-    "name": "demo_request",
-    "description": "Stores contact form submissions for demo requests from schools and districts, containing contact details and preferences",
+    "name": "students",
+    "description": "Students registered in the schools.",
     "fields": [
       {
         "name": "id",
-        "description": "Unique identifier for the demo request",
+        "description": "Unique identifier for the student entity",
         "type": 1,
         "compliance": {
           "confidentiality": 1,
@@ -53,73 +53,50 @@
         "format": "timestamp"
       },
       {
-        "name": "school_name",
-        "description": "Name of the school or district requesting the demo",
+        "name": "full_name",
+        "description": "Full name of the student",
+        "type": 1,
+        "compliance": {
+          "confidentiality": 3,
+          "reason": "PII"
+        }
+      },
+      {
+        "name": "grade",
+        "description": "Grade level of the student",
         "type": 1,
         "compliance": {
           "confidentiality": 2,
-          "reason": "Business operational data"
-        }
-      },
-      {
-        "name": "contact_person_name",
-        "description": "Full name of the contact person at the school",
-        "type": 1,
-        "compliance": {
-          "confidentiality": 3,
-          "reason": "Personally Identifiable Information (PII)"
-        }
-      },
-      {
-        "name": "contact_email",
-        "description": "Email address of the contact person",
-        "type": 1,
-        "compliance": {
-          "confidentiality": 3,
-          "reason": "Personally Identifiable Information (PII)"
-        },
-        "format": "email"
-      },
-      {
-        "name": "contact_phone",
-        "description": "Phone number of the contact person",
-        "type": 1,
-        "compliance": {
-          "confidentiality": 3,
-          "reason": "Personally Identifiable Information (PII)"
+          "reason": "Academic Information"
         },
         "nullable": true
       },
       {
-        "name": "student_count",
-        "description": "Estimated number of students in the school or district",
-        "type": 2,
-        "compliance": {
-          "confidentiality": 2,
-          "reason": "Business qualification metric"
-        },
-        "numeric": "int"
-      },
-      {
-        "name": "preferred_demo_time",
-        "description": "Preferred date and time for the demo in unix timestamp",
+        "name": "school_id_no",
+        "description": "Student ID number assigned by the school",
         "type": 1,
         "compliance": {
           "confidentiality": 2,
-          "reason": "Scheduling information"
-        },
-        "nullable": true,
-        "format": "timestamp"
+          "reason": "Academic Identifier"
+        }
       },
       {
-        "name": "additional_notes",
-        "description": "Any additional context, questions, or notes provided by the requester",
+        "name": "school_id",
+        "description": "ID of the school the student attends",
         "type": 1,
         "compliance": {
           "confidentiality": 2,
-          "reason": "Business context"
-        },
-        "nullable": true
+          "reason": "Relationship"
+        }
+      },
+      {
+        "name": "is_active",
+        "description": "Whether the student record is active",
+        "type": 3,
+        "compliance": {
+          "confidentiality": 2,
+          "reason": "Operational status"
+        }
       }
     ],
     "indexes": [
@@ -145,21 +122,29 @@
       },
       {
         "fields": [
-          "contact_email"
+          "school_id"
         ],
         "order": false
       },
       {
         "fields": [
-          "school_name"
+          "is_active"
         ],
         "order": false
-      },
+      }
+    ],
+    "relations": [
       {
-        "fields": [
-          "create_time"
+        "referencing_fields": [
+          "school_id"
         ],
-        "order": true
+        "referenced_entity": {
+          "name": "schools"
+        },
+        "referenced_fields": [
+          "id"
+        ],
+        "cascade": true
       }
     ]
   },
