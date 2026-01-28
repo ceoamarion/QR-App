@@ -1,6 +1,6 @@
 {
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["e2b-templates/**/*", "node_modules", "dist", "HallGuardianMobile", "HallGuardian/HallGuardianMobile"],
+  "exclude": ["e2b-templates/**/*"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",

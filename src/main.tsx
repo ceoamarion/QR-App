@@ -1,9 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { createRouter, createHashHistory, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-// Import AuthProvider
-import { AuthProvider } from "./contexts/AuthContext";
+
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 
@@ -28,13 +27,14 @@ const queryClient = new QueryClient({
 
 // Create a new router instance
 const router = createRouter({
-	routeTree,
-	context: {},
-	defaultPreload: "intent",
-	scrollRestoration: true,
-	defaultStructuralSharing: true,
-	defaultPreloadStaleTime: 0,
-	basepath: import.meta.env.TENANT_ID ? `/${import.meta.env.TENANT_ID}` : "/",
+  routeTree,
+  history: createHashHistory(), // ✅ THIS is the fix
+  context: {},
+  defaultPreload: "intent",
+  scrollRestoration: true,
+  defaultStructuralSharing: true,
+  defaultPreloadStaleTime: 0,
+  basepath: "/", // ✅ keep it simple for GitHub Pages/custom domain
 });
 
 // Register the router instance for type safety
@@ -51,9 +51,7 @@ if (rootElement && !rootElement.innerHTML) {
 	root.render(
 		<StrictMode>
 			<QueryClientProvider client={queryClient}>
-				<AuthProvider>
-					<RouterProvider router={router} />
-				</AuthProvider>
+				<RouterProvider router={router} />
 			</QueryClientProvider>
 		</StrictMode>,
 	);
