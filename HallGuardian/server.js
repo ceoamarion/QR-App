@@ -101,6 +101,51 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+import cors from "cors";
+
+const allowedOrigins = [
+  "https://hallguardian.com",
+  "https://www.hallguardian.com",
+
+  // OPTIONAL: if you’re testing web on GitHub Pages, add your real github.io URL:
+  // "https://<your-username>.github.io",
+
+  // OPTIONAL: Expo dev (phone). Keep for development, you can remove later:
+  "http://localhost:8081",
+  "http://localhost:19006",
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow non-browser requests (curl, Render health checks, etc.)
+      if (!origin) return callback(null, true);
+
+      // allow exact matches
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      // allow Expo dev domains (tunnel / lan). Optional:
+      if (
+        origin.startsWith("exp://") ||
+        origin.startsWith("expo://") ||
+        origin.includes(".exp.direct") ||
+        origin.includes(".expo.dev")
+      ) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Make sure OPTIONS preflight works
+app.options("*", cors());
+
+
 // ---- Auth middleware -----------------------------------------
 
 function authRequired(roles = []) {
