@@ -1,5 +1,5 @@
 // server.js
-// HallGuardian backend – QR/NFC + auth + basic admin APIs (ES module version)
+// HallGuardian backend – QR/NFC + auth + basic admin APIs (ES module)
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -13,26 +13,34 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// ---- ES module dirname shim ---------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* ES module dirname shim                                                     */
+/* -------------------------------------------------------------------------- */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ---- SQLite setup -------------------------------------------
-
-const sqlite3 = sqlite3pkg.verbose();
-
-// ---- Config --------------------------------------------------
-
-const PORT = process.env.PORT || 4000;
+/* -------------------------------------------------------------------------- */
+/* Config                                                                     */
+/* -------------------------------------------------------------------------- */
+const PORT = Number(process.env.PORT || 4000);
 const DB_FILE = process.env.DB_FILE || "hallguardian.db";
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-change-this";
-const JWT_EXPIRES_IN = "7d";
-const SALT_ROUNDS = 10;
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const SALT_ROUNDS = Number(process.env.SALT_ROUNDS || 10);
 
-// ---- DB setup ------------------------------------------------
+// ⚠️ Strongly recommended in production
+if (!process.env.JWT_SECRET) {
+  console.warn(
+    "⚠️ JWT_SECRET is not set. Using a dev default. Set JWT_SECRET in Render env vars!"
+  );
+}
 
+/* -------------------------------------------------------------------------- */
+/* SQLite setup                                                               */
+/* -------------------------------------------------------------------------- */
+const sqlite3 = sqlite3pkg.verbose();
 const dbPath = path.join(__dirname, DB_FILE);
+
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error("❌ Failed to connect to SQLite:", err);
@@ -51,15 +59,12 @@ function initializeSchema() {
 
   const sql = fs.readFileSync(schemaPath, "utf8");
   db.exec(sql, (err) => {
-    if (err) {
-      console.error("❌ Error applying schema.sql:", err);
-    } else {
-      console.log("✅ schema.sql applied (or already up to date)");
-    }
+    if (err) console.error("❌ Error applying schema.sql:", err);
+    else console.log("✅ schema.sql applied (or already up to date)");
   });
 }
 
-// Promisified helpers
+/* Promisified helpers */
 function run(sql, params = []) {
   return new Promise((resolve, reject) => {
     db.run(sql, params, function (err) {
@@ -87,22 +92,70 @@ function all(sql, params = []) {
   });
 }
 
-// ---- Express setup -------------------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* Express setup                                                              */
+/* -------------------------------------------------------------------------- */
 const app = express();
-app.use(cors());
 app.use(express.json());
+
+/* -------------------------------------------------------------------------- */
+/* CORS (ONE place, BEFORE routes)                                            */
+/* -------------------------------------------------------------------------- */
+const allowedOrigins = [
+  "https://hallguardian.com",
+  "https://www.hallguardian.com",
+
+  // Add your GitHub Pages domain if you're using it:
+  // "https://liriley-prog.github.io",
+
+  // Local web dev:
+  "http://localhost:5173",
+  "http://localhost:8081",
+  "http://localhost:19006"
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow non-browser requests (curl, health checks, etc.)
+      if (!origin) return callback(null, true);
+
+      // Allow known web origins
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      // Optional Expo dev origins (tunnel/LAN)
+      if (
+        origin.startsWith("exp://") ||
+        origin.startsWith("expo://") ||
+        origin.includes(".exp.direct") ||
+        origin.includes(".expo.dev")
+      ) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+  })
+);
+
+// Preflight
+app.options("*", cors());
+
+/* -------------------------------------------------------------------------- */
+/* Routes                                                                     */
+/* -------------------------------------------------------------------------- */
 
 // Health check
 app.get("/api/health", (req, res) => {
-  res.json({
-    ok: true,
-    time: new Date().toISOString(),
-  });
+  res.json({ ok: true, time: new Date().toISOString() });
 });
 
-// ---- Auth middleware -----------------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* Auth middleware                                                            */
+/* -------------------------------------------------------------------------- */
 function authRequired(roles = []) {
   return (req, res, next) => {
     const header = req.headers.authorization || "";
@@ -119,15 +172,17 @@ function authRequired(roles = []) {
       }
       req.user = payload; // { userId, role, schoolId }
       next();
-    } catch (err) {
+    } catch {
       return res.status(401).json({ error: "Invalid or expired token" });
     }
   };
 }
 
-// ---- Auth routes ---------------------------------------------
+/* -------------------------------------------------------------------------- */
+/* Auth routes                                                                */
+/* -------------------------------------------------------------------------- */
 
-// Register – use this to create initial admin/teacher users
+// Register (create initial admin/teacher users)
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { email, password, role, schoolId } = req.body;
@@ -138,9 +193,7 @@ app.post("/api/auth/register", async (req, res) => {
         .json({ error: "email, password, and role are required" });
     }
 
-    const existing = await get("SELECT id FROM users WHERE email = ?", [
-      email,
-    ]);
+    const existing = await get("SELECT id FROM users WHERE email = ?", [email]);
     if (existing) {
       return res.status(400).json({ error: "Email already in use" });
     }
@@ -160,33 +213,23 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// Login – returns JWT
+// Login (returns JWT)
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ error: "email and password are required" });
+      return res.status(400).json({ error: "email and password are required" });
     }
 
     const user = await get("SELECT * FROM users WHERE email = ?", [email]);
-    if (!user) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
+    if (!user) return res.status(401).json({ error: "Invalid email or password" });
 
     const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) {
-      return res.status(401).json({ error: "Invalid email or password" });
-    }
+    if (!match) return res.status(401).json({ error: "Invalid email or password" });
 
     const token = jwt.sign(
-      {
-        userId: user.id,
-        role: user.role,
-        schoolId: user.school_id,
-      },
+      { userId: user.id, role: user.role, schoolId: user.school_id },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN }
     );
@@ -198,8 +241,8 @@ app.post("/api/auth/login", async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role,
-        schoolId: user.school_id,
-      },
+        schoolId: user.school_id
+      }
     });
   } catch (err) {
     console.error("login error", err);
@@ -207,19 +250,15 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// ---- Admin: Students CRUD ------------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* Admin: Students CRUD                                                       */
+/* -------------------------------------------------------------------------- */
 app.get("/api/students", authRequired(["ADMIN"]), async (req, res) => {
   try {
     const schoolId = req.user.schoolId || req.query.schoolId;
-    if (!schoolId) {
-      return res.status(400).json({ error: "schoolId is required" });
-    }
+    if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
 
-    const rows = await all(
-      "SELECT * FROM students WHERE school_id = ?",
-      [schoolId]
-    );
+    const rows = await all("SELECT * FROM students WHERE school_id = ?", [schoolId]);
     res.json(rows);
   } catch (err) {
     console.error("students list error", err);
@@ -229,13 +268,12 @@ app.get("/api/students", authRequired(["ADMIN"]), async (req, res) => {
 
 app.post("/api/students", authRequired(["ADMIN"]), async (req, res) => {
   try {
-    const { schoolId, school_id_no, full_name, grade, qr_value, card_uid } =
-      req.body;
+    const { schoolId, school_id_no, full_name, grade, qr_value, card_uid } = req.body;
 
     if (!schoolId || !school_id_no || !full_name) {
-      return res.status(400).json({
-        error: "schoolId, school_id_no and full_name are required",
-      });
+      return res
+        .status(400)
+        .json({ error: "schoolId, school_id_no and full_name are required" });
     }
 
     const result = await run(
@@ -244,9 +282,7 @@ app.post("/api/students", authRequired(["ADMIN"]), async (req, res) => {
       [schoolId, school_id_no, full_name, grade || null, qr_value || null, card_uid || null]
     );
 
-    const student = await get("SELECT * FROM students WHERE id = ?", [
-      result.id,
-    ]);
+    const student = await get("SELECT * FROM students WHERE id = ?", [result.id]);
     res.json({ success: true, student });
   } catch (err) {
     console.error("students create error", err);
@@ -288,19 +324,15 @@ app.delete("/api/students/:id", authRequired(["ADMIN"]), async (req, res) => {
   }
 });
 
-// ---- Admin: Locations CRUD -----------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* Admin: Locations CRUD                                                      */
+/* -------------------------------------------------------------------------- */
 app.get("/api/locations", authRequired(["ADMIN"]), async (req, res) => {
   try {
     const schoolId = req.user.schoolId || req.query.schoolId;
-    if (!schoolId) {
-      return res.status(400).json({ error: "schoolId is required" });
-    }
+    if (!schoolId) return res.status(400).json({ error: "schoolId is required" });
 
-    const rows = await all(
-      "SELECT * FROM locations WHERE school_id = ?",
-      [schoolId]
-    );
+    const rows = await all("SELECT * FROM locations WHERE school_id = ?", [schoolId]);
     res.json(rows);
   } catch (err) {
     console.error("locations list error", err);
@@ -313,9 +345,7 @@ app.post("/api/locations", authRequired(["ADMIN"]), async (req, res) => {
     const { schoolId, name, code, type } = req.body;
 
     if (!schoolId || !name || !code) {
-      return res
-        .status(400)
-        .json({ error: "schoolId, name and code are required" });
+      return res.status(400).json({ error: "schoolId, name and code are required" });
     }
 
     const result = await run(
@@ -324,9 +354,7 @@ app.post("/api/locations", authRequired(["ADMIN"]), async (req, res) => {
       [schoolId, name, code, type || null]
     );
 
-    const location = await get("SELECT * FROM locations WHERE id = ?", [
-      result.id,
-    ]);
+    const location = await get("SELECT * FROM locations WHERE id = ?", [result.id]);
     res.json({ success: true, location });
   } catch (err) {
     console.error("locations create error", err);
@@ -334,8 +362,9 @@ app.post("/api/locations", authRequired(["ADMIN"]), async (req, res) => {
   }
 });
 
-// ---- Scan helpers --------------------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* Scan helpers                                                               */
+/* -------------------------------------------------------------------------- */
 async function findOrCreateLocationByCode(schoolId, locationCode) {
   let loc = await get(
     "SELECT * FROM locations WHERE school_id = ? AND code = ?",
@@ -367,26 +396,24 @@ async function getNextDirection(studentId) {
   return last.direction === "IN" ? "OUT" : "IN";
 }
 
-// ---- Scan: QR ------------------------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* Scan: QR + NFC                                                             */
+/* -------------------------------------------------------------------------- */
 app.post("/api/scan/qr", authRequired(["ADMIN", "TEACHER"]), async (req, res) => {
   try {
     const { qrValue, locationCode, schoolId, deviceLabel } = req.body;
 
     if (!qrValue || !locationCode || !schoolId) {
-      return res.status(400).json({
-        error: "qrValue, locationCode, and schoolId are required",
-      });
+      return res
+        .status(400)
+        .json({ error: "qrValue, locationCode, and schoolId are required" });
     }
 
     const student = await get(
       "SELECT * FROM students WHERE qr_value = ? AND school_id = ?",
       [qrValue, schoolId]
     );
-
-    if (!student) {
-      return res.status(404).json({ error: "Student not found for that QR" });
-    }
+    if (!student) return res.status(404).json({ error: "Student not found for that QR" });
 
     const location = await findOrCreateLocationByCode(schoolId, locationCode);
     const direction = await getNextDirection(student.id);
@@ -401,18 +428,10 @@ app.post("/api/scan/qr", authRequired(["ADMIN", "TEACHER"]), async (req, res) =>
     res.json({
       success: true,
       eventId: result.id,
-      student: {
-        id: student.id,
-        name: student.full_name,
-        school_id: student.school_id,
-      },
-      location: {
-        id: location.id,
-        name: location.name,
-        code: location.code,
-      },
+      student: { id: student.id, name: student.full_name, school_id: student.school_id },
+      location: { id: location.id, name: location.name, code: location.code },
       direction,
-      source: "QR",
+      source: "QR"
     });
   } catch (err) {
     console.error("scan qr error", err);
@@ -420,28 +439,21 @@ app.post("/api/scan/qr", authRequired(["ADMIN", "TEACHER"]), async (req, res) =>
   }
 });
 
-// ---- Scan: NFC -----------------------------------------------
-
 app.post("/api/scan/nfc", authRequired(["ADMIN", "TEACHER"]), async (req, res) => {
   try {
     const { cardUid, locationCode, schoolId, deviceLabel } = req.body;
 
     if (!cardUid || !locationCode || !schoolId) {
-      return res.status(400).json({
-        error: "cardUid, locationCode, and schoolId are required",
-      });
+      return res
+        .status(400)
+        .json({ error: "cardUid, locationCode, and schoolId are required" });
     }
 
     const student = await get(
       "SELECT * FROM students WHERE card_uid = ? AND school_id = ?",
       [cardUid, schoolId]
     );
-
-    if (!student) {
-      return res
-        .status(404)
-        .json({ error: "Student not found for that card UID" });
-    }
+    if (!student) return res.status(404).json({ error: "Student not found for that card UID" });
 
     const location = await findOrCreateLocationByCode(schoolId, locationCode);
     const direction = await getNextDirection(student.id);
@@ -456,18 +468,10 @@ app.post("/api/scan/nfc", authRequired(["ADMIN", "TEACHER"]), async (req, res) =
     res.json({
       success: true,
       eventId: result.id,
-      student: {
-        id: student.id,
-        name: student.full_name,
-        school_id: student.school_id,
-      },
-      location: {
-        id: location.id,
-        name: location.name,
-        code: location.code,
-      },
+      student: { id: student.id, name: student.full_name, school_id: student.school_id },
+      location: { id: location.id, name: location.name, code: location.code },
       direction,
-      source: "NFC",
+      source: "NFC"
     });
   } catch (err) {
     console.error("scan nfc error", err);
@@ -475,8 +479,9 @@ app.post("/api/scan/nfc", authRequired(["ADMIN", "TEACHER"]), async (req, res) =
   }
 });
 
-// ---- Student current location --------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* Student current location                                                   */
+/* -------------------------------------------------------------------------- */
 app.get(
   "/api/students/:id/current-location",
   authRequired(["ADMIN", "TEACHER"]),
@@ -499,7 +504,7 @@ app.get(
           studentId,
           status: "NO_SCANS",
           currentLocation: null,
-          lastScanAt: null,
+          lastScanAt: null
         });
       }
 
@@ -508,13 +513,9 @@ app.get(
         status: event.direction === "IN" ? "IN_LOCATION" : "OUT_OF_LOCATION",
         currentLocation:
           event.direction === "IN"
-            ? {
-                id: event.location_id,
-                name: event.location_name,
-                code: event.location_code,
-              }
+            ? { id: event.location_id, name: event.location_name, code: event.location_code }
             : null,
-        lastScanAt: event.scanned_at,
+        lastScanAt: event.scanned_at
       });
     } catch (err) {
       console.error("current-location error", err);
@@ -523,8 +524,9 @@ app.get(
   }
 );
 
-// ---- Location occupants --------------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* Location occupants                                                         */
+/* -------------------------------------------------------------------------- */
 app.get(
   "/api/locations/:id/occupants",
   authRequired(["ADMIN", "TEACHER"]),
@@ -535,11 +537,9 @@ app.get(
       const rows = await all(
         `
         WITH last_scans AS (
-          SELECT
-            se.student_id,
-            MAX(se.scanned_at) AS last_time
-          FROM scan_events se
-          GROUP BY se.student_id
+          SELECT student_id, MAX(scanned_at) AS last_time
+          FROM scan_events
+          GROUP BY student_id
         )
         SELECT
           s.id AS student_id,
@@ -558,11 +558,7 @@ app.get(
         [locationId]
       );
 
-      res.json({
-        locationId,
-        count: rows.length,
-        occupants: rows,
-      });
+      res.json({ locationId, count: rows.length, occupants: rows });
     } catch (err) {
       console.error("occupants error", err);
       res.status(500).json({ error: "Internal server error" });
@@ -570,8 +566,9 @@ app.get(
   }
 );
 
-// ---- School: students currently OUT ---------------------------
-
+/* -------------------------------------------------------------------------- */
+/* School: students currently OUT                                             */
+/* -------------------------------------------------------------------------- */
 app.get(
   "/api/schools/:id/current-out",
   authRequired(["ADMIN", "TEACHER"]),
@@ -582,9 +579,7 @@ app.get(
       const rows = await all(
         `
         WITH last_scans AS (
-          SELECT
-            se.student_id,
-            MAX(se.scanned_at) AS last_time
+          SELECT se.student_id, MAX(se.scanned_at) AS last_time
           FROM scan_events se
           JOIN students s ON s.id = se.student_id
           WHERE s.school_id = ?
@@ -609,11 +604,7 @@ app.get(
         [schoolId]
       );
 
-      res.json({
-        schoolId,
-        count: rows.length,
-        outOfClass: rows,
-      });
+      res.json({ schoolId, count: rows.length, outOfClass: rows });
     } catch (err) {
       console.error("current-out error", err);
       res.status(500).json({ error: "Internal server error" });
@@ -621,9 +612,9 @@ app.get(
   }
 );
 
-
-// ---- Start server --------------------------------------------
-
+/* -------------------------------------------------------------------------- */
+/* Start server                                                               */
+/* -------------------------------------------------------------------------- */
 app.listen(PORT, () => {
-  console.log(`🚀 HallGuardian backend running on http://localhost:${PORT}`);
+  console.log(`🚀 HallGuardian backend running on port ${PORT}`);
 });
